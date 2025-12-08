@@ -1,5 +1,5 @@
-// Configuration
-const API_BASE = 'http://localhost:5000/api';
+// Configuration - Utilise l'URL courante pour s'adapter automatiquement
+const API_BASE = `${window.location.protocol}//${window.location.host}/api`;
 let peerName = null;
 let peerPort = null;
 let refreshInterval = null;

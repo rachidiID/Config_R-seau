@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV '/home/rachidi/Base_de_données/reseau-partage/venv'
+set -gx VIRTUAL_ENV '/home/rachidi/Base_de_données/Config_R-seau/reseau-partage/venv'
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
