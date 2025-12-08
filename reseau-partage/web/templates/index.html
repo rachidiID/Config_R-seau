@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réseau de Partage P2P</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Réseau de Partage P2P</h1>
+            <p class="subtitle">Partagez vos fichiers en toute simplicité</p>
+            
+            <div class="peer-info">
+                <div class="info-badge">
+                    <span class="status-dot"></span>
+                    <span>Connecté</span>
+                </div>
+                <div class="info-badge">
+                    <strong>Nom:</strong> <span id="peerName">-</span>
+                </div>
+                <div class="info-badge">
+                    <strong>Port:</strong> <span id="peerPort">-</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Send File Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Envoyer un fichier</h2>
+                </div>
+                
+                <div class="file-upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p><strong>Cliquez ou glissez un fichier ici</strong></p>
+                    <p style="font-size: 12px; color: #9ca3af; margin-top: 8px;">
+                        Fichiers et dossiers supportés
+                    </p>
+                    <input type="file" id="fileInput" style="display: none;">
+                </div>
+                
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    <strong>Fichier sélectionné:</strong><br>
+                    <span id="fileName"></span> (<span id="fileSize"></span>)
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Destinataire</label>
+                    <select id="recipientSelect" class="form-select">
+                        <option value="">Chargement...</option>
+                    </select>
+                </div>
+                
+                <button id="sendBtn" class="btn btn-primary btn-full" disabled>
+                    Envoyer le fichier
+                </button>
+                
+                <div id="progressContainer" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div id="progressText" class="progress-text">0% - En attente...</div>
+                </div>
+            </div>
+
+            <!-- Connected Peers Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">PC Connectés</h2>
+                    <span class="badge badge-primary">
+                        <span id="peersCount">0</span> en ligne
+                    </span>
+                </div>
+                
+                <div id="peersList" class="peers-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Received Files Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Fichiers Reçus</h2>
+                <span class="badge badge-primary">
+                    <span id="filesCount">0</span> fichier(s)
+                </span>
+            </div>
+            
+            <div id="filesList" class="files-list">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📂</div>
+                    <p>Aucun fichier reçu</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
