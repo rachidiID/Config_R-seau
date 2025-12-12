@@ -238,63 +238,52 @@ async function sendFile() {
     sendBtn.innerHTML = '<span class="spinner"></span>Envoi en cours...';
     
     try {
-        // 1. Calculer le checksum (simplifié)
-        const checksum = await calculateChecksum(file);
-        
-        // 2. Enregistrer le fichier sur le serveur
+        // Préparer les destinataires
         const recipients = recipient === '*' ? 
             Array.from(recipientSelect.options)
                 .filter(opt => opt.value !== '*' && opt.value !== '')
                 .map(opt => opt.value) :
             [recipient];
         
-        const registerResponse = await fetch(`${API_BASE}/file/register`, {
+        // Créer FormData pour l'upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('owner', peerName);
+        formData.append('recipients', recipients.join(','));
+        formData.append('permission', recipients.length > 1 ? 'public' : 'private');
+        
+        // Afficher la progression
+        showProgress(true);
+        
+        // Envoyer le fichier au serveur
+        const uploadResponse = await fetch(`${API_BASE}/file/upload`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                filename: file.name,
-                filesize: file.size,
-                checksum: checksum,
-                owner: peerName,
-                permission: recipients.length > 1 ? 'public' : 'private',
-                recipients: recipients
-            })
+            body: formData
         });
         
-        if (!registerResponse.ok) {
-            throw new Error('Erreur lors de l\'enregistrement du fichier');
+        if (!uploadResponse.ok) {
+            const error = await uploadResponse.json();
+            throw new Error(error.error || 'Erreur lors de l\'upload du fichier');
         }
         
-        const { file_id } = await registerResponse.json();
+        const result = await uploadResponse.json();
         
-        // 3. Simuler l'envoi (en réalité, cela utiliserait WebSockets ou WebRTC)
-        showProgress(true);
+        // Simuler la progression jusqu'à 100%
         await simulateUpload(file, recipients.length);
         
-        // 4. Logger le transfert
-        for (const rec of recipients) {
-            await fetch(`${API_BASE}/transfer/log`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    file_id: file_id,
-                    from_peer: peerName,
-                    to_peer: rec,
-                    status: 'success'
-                })
-            });
-        }
-        
-        showNotification(`Fichier envoyé à ${recipients.length} PC`, 'success');
+        showNotification(`Fichier envoyé à ${recipients.length} PC avec succès`, 'success');
         
         // Réinitialiser
         fileInput.value = '';
         document.getElementById('fileInfo').style.display = 'none';
         showProgress(false);
         
+        // Rafraîchir la liste des fichiers
+        loadFiles();
+        
     } catch (error) {
         console.error('Erreur:', error);
-        showNotification('Erreur lors de l\'envoi du fichier', 'error');
+        showNotification(error.message || 'Erreur lors de l\'envoi du fichier', 'error');
         showProgress(false);
     } finally {
         sendBtn.disabled = false;

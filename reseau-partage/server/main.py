@@ -5,8 +5,10 @@ Projet: Réseau de partage de fichiers
 
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 import sys
 import os
+import shutil
 
 # Ajouter le dossier parent au path pour importer shared
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -14,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from server.database import Database
 from server.config import *
 from shared.protocol import MessageType, PermissionType
-from shared.utils import get_timestamp
+from shared.utils import get_timestamp, calculate_checksum
 
 # Initialiser Flask
 web_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'web')
@@ -23,6 +25,11 @@ app = Flask(__name__,
             static_folder=os.path.join(web_dir, 'static'))
 CORS(app)
 app.config['DEBUG'] = DEBUG
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB max
+
+# Dossier de stockage pour les uploads web
+WEB_UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'storage')
+os.makedirs(WEB_UPLOAD_DIR, exist_ok=True)
 
 # Initialiser la base de données
 db = Database(DATABASE_PATH)
@@ -239,6 +246,78 @@ def get_received_files(peer_name):
     """
     files = db.get_received_files(peer_name)
     return jsonify({'files': files, 'count': len(files)}), 200
+
+
+@app.route('/api/file/upload', methods=['POST'])
+def upload_file():
+    """
+    Upload réel d'un fichier depuis le navigateur
+    Le fichier est stocké sur le serveur et les métadonnées enregistrées
+    """
+    # Vérifier qu'un fichier est présent
+    if 'file' not in request.files:
+        return jsonify({'error': 'Aucun fichier fourni'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Nom de fichier vide'}), 400
+    
+    # Récupérer les métadonnées
+    owner = request.form.get('owner')
+    recipients_str = request.form.get('recipients', '')
+    permission = request.form.get('permission', 'private')
+    
+    if not owner:
+        return jsonify({'error': 'Propriétaire requis'}), 400
+    
+    # Parser les destinataires
+    recipients = [r.strip() for r in recipients_str.split(',') if r.strip()] if recipients_str else []
+    
+    # Sécuriser le nom de fichier
+    filename = secure_filename(file.filename)
+    
+    # Créer le dossier du propriétaire
+    owner_dir = os.path.join(WEB_UPLOAD_DIR, owner)
+    os.makedirs(owner_dir, exist_ok=True)
+    
+    # Sauvegarder le fichier
+    filepath = os.path.join(owner_dir, filename)
+    file.save(filepath)
+    
+    # Calculer le checksum et la taille
+    filesize = os.path.getsize(filepath)
+    checksum = calculate_checksum(filepath)
+    
+    # Enregistrer dans la base de données
+    file_id = db.register_file(
+        filename=filename,
+        filesize=filesize,
+        checksum=checksum,
+        owner=owner,
+        permission_type=permission,
+        recipients=recipients
+    )
+    
+    # Copier le fichier vers chaque destinataire
+    for recipient in recipients:
+        recipient_dir = os.path.join(WEB_UPLOAD_DIR, recipient)
+        os.makedirs(recipient_dir, exist_ok=True)
+        recipient_filepath = os.path.join(recipient_dir, filename)
+        
+        # Copier le fichier
+        shutil.copy2(filepath, recipient_filepath)
+        
+        # Logger le transfert
+        db.log_transfer(file_id, owner, recipient, 'success')
+    
+    return jsonify({
+        'status': 'success',
+        'file_id': file_id,
+        'filename': filename,
+        'filesize': filesize,
+        'checksum': checksum,
+        'recipients': recipients
+    }), 200
 
 
 # ========================================
