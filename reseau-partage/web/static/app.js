@@ -164,18 +164,55 @@ async function loadPeers() {
 // Charger la liste des fichiers reçus
 async function loadFiles() {
     try {
-        // Simuler des fichiers reçus (en réalité, cela viendrait du backend)
+        // Charger les fichiers reçus
+        const receivedResponse = await fetch(`${API_BASE}/files/received/${peerName}`);
+        const receivedData = await receivedResponse.json();
+        
+        // Charger les fichiers envoyés
+        const sentResponse = await fetch(`${API_BASE}/files/sent/${peerName}`);
+        const sentData = await sentResponse.json();
+        
         const filesList = document.getElementById('filesList');
         
-        // Pour l'instant, afficher un état vide
-        filesList.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📂</div>
-                <p>Aucun fichier reçu</p>
-            </div>
-        `;
+        const allFiles = [
+            ...receivedData.files.map(f => ({...f, type: 'received'})),
+            ...sentData.files.map(f => ({...f, type: 'sent'}))
+        ];
         
-        document.getElementById('filesCount').textContent = '0';
+        if (allFiles.length === 0) {
+            filesList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📂</div>
+                    <p>Aucun fichier</p>
+                </div>
+            `;
+            document.getElementById('filesCount').textContent = '0';
+            return;
+        }
+        
+        // Afficher les fichiers
+        filesList.innerHTML = allFiles.map(file => {
+            const isReceived = file.type === 'received';
+            const icon = isReceived ? '📥' : '📤';
+            const label = isReceived ? `De: ${file.sender}` : `À: ${file.recipients || 'Plusieurs'}`;
+            const badgeClass = isReceived ? 'badge-received' : 'badge-sent';
+            
+            return `
+                <div class="file-item">
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-details">
+                        <div class="file-name">${file.filename}</div>
+                        <div class="file-meta">
+                            ${formatSize(file.filesize)} • ${label}
+                            ${file.recipient_count ? ` (${file.recipient_count} PC)` : ''}
+                        </div>
+                    </div>
+                    <span class="badge ${badgeClass}">${isReceived ? 'Reçu' : 'Envoyé'}</span>
+                </div>
+            `;
+        }).join('');
+        
+        document.getElementById('filesCount').textContent = allFiles.length;
         
     } catch (error) {
         console.error('Erreur:', error);

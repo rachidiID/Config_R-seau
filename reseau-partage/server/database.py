@@ -340,3 +340,64 @@ class Database:
         
         conn.commit()
         conn.close()
+    
+    def get_sent_files(self, peer_name: str) -> List[Dict]:
+        """
+        Obtenir les fichiers envoyés par un PC
+        
+        Args:
+            peer_name: Nom du PC
+            
+        Returns:
+            Liste des fichiers envoyés avec infos de transfert
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT DISTINCT 
+                f.id, f.filename, f.filesize, f.checksum, 
+                f.created_at,
+                GROUP_CONCAT(t.to_peer) as recipients,
+                COUNT(DISTINCT t.to_peer) as recipient_count
+            FROM files f
+            LEFT JOIN transfers t ON f.id = t.file_id AND t.status = 'success'
+            WHERE f.owner = ?
+            GROUP BY f.id
+            ORDER BY f.created_at DESC
+        """, (peer_name,))
+        
+        files = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return files
+    
+    def get_received_files(self, peer_name: str) -> List[Dict]:
+        """
+        Obtenir les fichiers reçus par un PC
+        
+        Args:
+            peer_name: Nom du PC
+            
+        Returns:
+            Liste des fichiers reçus avec infos d'expéditeur
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                f.id, f.filename, f.filesize, f.checksum,
+                f.owner as sender,
+                t.transferred_at,
+                t.status
+            FROM files f
+            JOIN transfers t ON f.id = t.file_id
+            WHERE t.to_peer = ? AND t.status = 'success'
+            ORDER BY t.transferred_at DESC
+        """, (peer_name,))
+        
+        files = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return files

@@ -125,6 +125,16 @@ body {
     color: var(--primary);
 }
 
+.badge-received {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.badge-sent {
+    background: #e0e7ff;
+    color: #6366f1;
+}
+
 /* Send File Section */
 .file-upload-area {
     border: 2px dashed var(--border);

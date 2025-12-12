@@ -217,6 +217,30 @@ def log_transfer():
     return jsonify({'status': 'logged'}), 200
 
 
+@app.route('/api/files/sent/<peer_name>', methods=['GET'])
+def get_sent_files(peer_name):
+    """
+    Obtenir les fichiers envoyés par un PC
+    
+    Args:
+        peer_name: Nom du PC
+    """
+    files = db.get_sent_files(peer_name)
+    return jsonify({'files': files, 'count': len(files)}), 200
+
+
+@app.route('/api/files/received/<peer_name>', methods=['GET'])
+def get_received_files(peer_name):
+    """
+    Obtenir les fichiers reçus par un PC
+    
+    Args:
+        peer_name: Nom du PC
+    """
+    files = db.get_received_files(peer_name)
+    return jsonify({'files': files, 'count': len(files)}), 200
+
+
 # ========================================
 # ROUTES - INFORMATIONS
 # ========================================
