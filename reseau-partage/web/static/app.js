@@ -232,16 +232,12 @@ async function loadFiles() {
             return;
         }
         
-        // Afficher les fichiers
+        // Afficher les fichiers (FILTRÉ: seuls les fichiers reçus pour cet utilisateur)
         filesList.innerHTML = allFiles.map(file => {
             const isReceived = file.type === 'received';
             const icon = isReceived ? '📥' : '📤';
             const label = isReceived ? `De: ${file.sender}` : `À: ${file.recipients || 'Plusieurs'}`;
             const badgeClass = isReceived ? 'badge-received' : 'badge-sent';
-            
-            // Déterminer le nom du PC propriétaire pour le téléchargement
-            const ownerName = isReceived ? peerName : (file.recipients === '*' ? peerName : file.recipients);
-            const downloadUrl = `${API_BASE}/file/download/${encodeURIComponent(peerName)}/${encodeURIComponent(file.filename)}`;
             
             return `
                 <div class="file-item">

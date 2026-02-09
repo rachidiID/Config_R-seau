@@ -370,22 +370,41 @@ def upload_file():
 def download_file(peer_name, filename):
     """
     Télécharger un fichier depuis le stockage d'un PC
+    AVEC VÉRIFICATION DES PERMISSIONS
     
     Args:
-        peer_name: Nom du PC propriétaire
+        peer_name: Nom du PC qui télécharge (celui connecté)
         filename: Nom du fichier
     """
     # Sécuriser le nom de fichier
     filename = secure_filename(filename)
     
-    # Chemin vers le fichier
+    # Vérifier que l'utilisateur a le droit de télécharger ce fichier
+    # Le fichier doit être dans SON dossier (reçu pour lui)
     file_dir = os.path.join(WEB_UPLOAD_DIR, peer_name)
+    file_path = os.path.join(file_dir, filename)
     
-    # Vérifier que le fichier existe
-    if not os.path.exists(os.path.join(file_dir, filename)):
-        return jsonify({'error': 'Fichier introuvable'}), 404
+    # SÉCURITÉ : Vérifier que le fichier existe dans SON dossier
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'Fichier introuvable ou accès refusé'}), 403
     
-    # Envoyer le fichier
+    # SÉCURITÉ : Vérifier que le fichier lui a bien été envoyé
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT COUNT(*) as count
+        FROM transfers t
+        JOIN files f ON t.file_id = f.id
+        WHERE f.filename = ? AND t.to_peer = ? AND t.status = 'success'
+    """, (filename, peer_name))
+    result = cursor.fetchone()
+    conn.close()
+    
+    if result['count'] == 0:
+        # Ce fichier ne lui a pas été envoyé
+        return jsonify({'error': 'Accès refusé : ce fichier ne vous est pas destiné'}), 403
+    
+    # OK, l'utilisateur a le droit de télécharger
     return send_from_directory(
         file_dir, 
         filename, 
