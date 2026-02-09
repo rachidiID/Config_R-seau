@@ -3,12 +3,19 @@ const API_BASE = `${window.location.protocol}//${window.location.host}/api`;
 let peerName = null;
 let peerPort = null;
 let refreshInterval = null;
+let haEnabled = false;
+let currentServer = null;
+
+// Configuration fragmentation
+const FRAGMENT_THRESHOLD = 1024 * 1024 * 1024; // 1 GB
+const CHUNK_SIZE = 256 * 1024 * 1024; // 256 MB
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
     initializePeer();
     setupEventListeners();
     startAutoRefresh();
+    checkHAStatus();
 });
 
 // Initialiser le peer
@@ -105,10 +112,21 @@ function handleFileSelect(event) {
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
     const fileSize = document.getElementById('fileSize');
+    const fragmentInfo = document.getElementById('fragmentInfo');
+    const fragmentDetails = document.getElementById('fragmentDetails');
     
     fileName.textContent = file.name;
     fileSize.textContent = formatSize(file.size);
     fileInfo.style.display = 'block';
+    
+    // Vérifier si fragmentation nécessaire
+    if (file.size > FRAGMENT_THRESHOLD) {
+        const chunkCount = Math.ceil(file.size / CHUNK_SIZE);
+        fragmentInfo.style.display = 'block';
+        fragmentDetails.textContent = `Le fichier sera découpé en ${chunkCount} fragments de 256 MB max`;
+    } else {
+        fragmentInfo.style.display = 'none';
+    }
     
     document.getElementById('sendBtn').disabled = false;
 }
@@ -380,7 +398,67 @@ function startAutoRefresh() {
     refreshInterval = setInterval(() => {
         loadPeers();
         loadFiles();
+        checkHAStatus();
     }, 5000); // Toutes les 5 secondes
+}
+
+// Vérifier l'état HA
+async function checkHAStatus() {
+    try {
+        const response = await fetch(`${API_BASE}/ha/status`);
+        if (response.ok) {
+            const data = await response.json();
+            haEnabled = data.ha_enabled || false;
+            
+            if (haEnabled && data.servers) {
+                displayHAStatus(data);
+            }
+        }
+    } catch (error) {
+        // HA non disponible, mode normal
+        haEnabled = false;
+    }
+}
+
+// Afficher l'état HA
+function displayHAStatus(data) {
+    const haStatus = document.getElementById('haStatus');
+    const serversList = document.getElementById('serversList');
+    const serverBadge = document.getElementById('serverBadge');
+    const serverName = document.getElementById('serverName');
+    
+    if (!haStatus || !data.servers || data.servers.length === 0) return;
+    
+    haStatus.style.display = 'block';
+    
+    // Trouver le serveur primaire
+    const primary = data.servers.find(s => s.is_primary);
+    if (primary) {
+        serverName.textContent = `${primary.name} (Primaire)`;
+        serverName.style.color = '#10b981';
+    }
+    
+    // Afficher tous les serveurs
+    serversList.innerHTML = data.servers.map(server => {
+        const isPrimary = server.is_primary;
+        const statusClass = isPrimary ? 'server-primary' : 'server-secondary';
+        const statusText = isPrimary ? 'Primaire' : 'Secondaire';
+        const priorityStars = '⭐'.repeat(server.priority);
+        
+        return `
+            <div class="server-card ${statusClass}">
+                <div class="server-header">
+                    <strong>${server.name}</strong>
+                    <span class="badge ${isPrimary ? 'badge-success' : 'badge-secondary'}">${statusText}</span>
+                </div>
+                <div class="server-info">
+                    <div>📍 ${server.host}:${server.port}</div>
+                    <div>🎯 Priorité: ${priorityStars} (${server.priority})</div>
+                    <div>⏱️ Vu il y a ${Math.floor((Date.now() / 1000) - server.last_seen)}s</div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // Déconnexion propre

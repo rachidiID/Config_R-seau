@@ -443,3 +443,67 @@ body {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* HA Status Styles */
+.ha-status {
+    margin-bottom: 30px;
+}
+
+.servers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.server-card {
+    background: var(--light);
+    border-radius: 12px;
+    padding: 15px;
+    border-left: 4px solid #9ca3af;
+    transition: all 0.3s;
+}
+
+.server-card.server-primary {
+    border-left-color: var(--success);
+    background: #d1fae5;
+}
+
+.server-card.server-secondary {
+    border-left-color: var(--primary);
+}
+
+.server-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.server-info {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.server-info > div {
+    margin: 4px 0;
+}
+
+.badge-success {
+    background: #d1fae5;
+    color: var(--success);
+}
+
+.badge-secondary {
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+/* File Info Enhancement */
+.file-info {
+    padding: 15px;
+    background: var(--light);
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+

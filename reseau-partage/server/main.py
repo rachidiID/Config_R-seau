@@ -332,10 +332,25 @@ def server_status():
     
     return jsonify({
         'status': 'running',
-        'version': '1.0.0',
+        'version': '2.0.0',
         'peers_total': len(peers),
         'peers_online': len(online),
         'timestamp': get_timestamp()
+    }), 200
+
+
+@app.route('/api/ha/status', methods=['GET'])
+def ha_status():
+    """
+    État de la haute disponibilité
+    Note: Cette route retourne des données simulées si HA n'est pas activé
+    """
+    # TODO: Intégrer avec shared.high_availability si HA activé
+    # Pour l'instant, retourne un état minimal
+    return jsonify({
+        'ha_enabled': False,
+        'servers': [],
+        'message': 'Mode serveur unique (HA non activé)'
     }), 200
 
 

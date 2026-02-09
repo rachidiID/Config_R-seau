@@ -1,75 +1,40 @@
 # 🌐 Réseau de Partage de Fichiers P2P
 
-Système de partage de fichiers sécurisé entre ordinateurs sur le même réseau local avec **haute disponibilité** et support des **gros fichiers**.
+Système de partage de fichiers sécurisé entre ordinateurs sur le même réseau local.
 
-## ✨ Fonctionnalités
+##  Fonctionnalités
 
-### Fonctionnalités de Base
-
-- 🔍 **Découverte automatique** des PC sur le réseau
-- 📤 **Transfert de fichiers** direct entre PC (P2P)
-- 🔐 **Permissions granulaires** :
+-  **Découverte automatique** des PC sur le réseau
+-  **Transfert de fichiers** direct entre PC (P2P)
+-  **Permissions granulaires** :
   - Privé (1 destinataire)
   - Partagé (plusieurs destinataires)
   - Public (tout le réseau)
-- 📁 **Transfert de dossiers** complets
-- 🔒 **Chiffrement** des fichiers sensibles
-- 💻 **Interface** CLI et Web
-- 📊 **Barre de progression** avec tqdm
-- 🔔 **Notifications** desktop
+-  **Transfert de dossiers** complets
+-  **Chiffrement** des fichiers sensibles
+-  **Interface** simple en ligne de commande
 
-### 🆕 Fonctionnalités Avancées (v2.0)
-
-- 🔄 **Haute Disponibilité (HA)** :
-  - Plusieurs serveurs simultanés
-  - Élection automatique du serveur primaire
-  - Basculement automatique en cas de panne
-  - Synchronisation de la base de données
-  - Zéro temps d'arrêt
-
-- 📦 **Fragmentation de Fichiers (>1GB)** :
-  - Découpage automatique en chunks de 256MB
-  - Distribution intelligente sur plusieurs PCs
-  - Redondance (2 copies minimum par chunk)
-  - Reconstruction transparente
-  - Vérification d'intégrité (SHA-256)
-
-> 📖 **Documentation complète** : [ADVANCED_FEATURES.md](ADVANCED_FEATURES.md)  
-> 🚀 **Démarrage rapide** : [QUICKSTART_ADVANCED.md](QUICKSTART_ADVANCED.md)
-
-## 📂 Structure
+##  Structure
 
 ```
 reseau-partage/
-├── server/                    # Serveur central (annuaire)
-│   ├── main.py               # Point d'entrée serveur
-│   ├── database.py           # Base de données SQLite
-│   └── config.py             # Configuration
-├── client/                    # Application client
-│   ├── main.py               # Point d'entrée client
-│   ├── network.py            # Communication réseau
-│   ├── transfer.py           # Gestion des transferts
-│   ├── ui.py                 # Interface utilisateur
-│   └── notifications.py      # Notifications desktop
-├── shared/                    # Code partagé
-│   ├── protocol.py           # Protocole de communication
-│   ├── utils.py              # Utilitaires
-│   ├── fragmentation.py      # 🆕 Système de fragmentation
-│   └── high_availability.py  # 🆕 Haute disponibilité
-├── web/                       # Interface web
-│   ├── templates/
-│   │   └── index.html        # Interface web moderne
-│   └── static/
-│       ├── app.js            # JavaScript frontend
-│       └── style.css         # Styles CSS
-├── storage/                   # Dossier de stockage (fichiers reçus)
-├── demo_advanced.py          # 🆕 Script de démonstration
-├── ADVANCED_FEATURES.md      # 🆕 Documentation avancée
-├── QUICKSTART_ADVANCED.md    # 🆕 Guide démarrage rapide
+├── server/          # Serveur central (annuaire)
+│   ├── main.py      # Point d'entrée serveur
+│   ├── database.py  # Base de données SQLite
+│   └── config.py    # Configuration
+├── client/          # Application client
+│   ├── main.py      # Point d'entrée client
+│   ├── network.py   # Communication réseau
+│   ├── transfer.py  # Gestion des transferts
+│   └── ui.py        # Interface utilisateur
+├── shared/          # Code partagé
+│   ├── protocol.py  # Protocole de communication
+│   └── utils.py     # Utilitaires
+├── storage/         # Dossier de stockage (fichiers reçus)
 └── requirements.txt
 ```
 
-## 🚀 Installation
+##  Installation
 
 ### 1. Créer l'environnement virtuel
 
