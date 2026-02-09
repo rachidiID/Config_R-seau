@@ -25,4 +25,4 @@ ENABLE_AUTH = False  # Authentification simple (pour plus tard)
 SECRET_KEY = 'dev-secret-key-change-in-production'
 
 # Debug
-DEBUG = True
+DEBUG = False  # Désactivé en production (PythonAnywhere)

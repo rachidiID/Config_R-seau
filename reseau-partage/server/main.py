@@ -567,7 +567,7 @@ def auth_logout():
 # ========================================
 
 def main():
-    """Démarrer le serveur"""
+    """Démarrer le serveur (en mode local uniquement)"""
     print("=" * 50)
     print("SERVEUR DE PARTAGE P2P")
     print("=" * 50)
@@ -584,5 +584,10 @@ def main():
     )
 
 
+# Pour PythonAnywhere : exposer l'application directement
+# L'objet 'app' sera importé par le fichier WSGI
 if __name__ == '__main__':
     main()
+else:
+    # En mode WSGI (PythonAnywhere), l'application est déjà prête
+    application = app
