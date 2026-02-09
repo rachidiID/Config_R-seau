@@ -287,9 +287,20 @@ git push
 
 **Console PythonAnywhere :**
 ```bash
-cd ~/Config_R-seau/reseau-partage
+cd ~/Config_R-seau
+
+# Résoudre conflits git
+git stash  # Sauvegarder changements locaux
+# OU : git reset --hard HEAD  # Abandonner changements locaux
+
+# Pull
 git pull origin main
-pip install --user APScheduler==3.10.4
+
+# Activer virtualenv
+source reseau-partage/venv/bin/activate
+
+# Installer (SANS --user)
+pip install APScheduler==3.10.4
 ```
 
 **Web tab :**
