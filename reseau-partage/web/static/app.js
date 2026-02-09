@@ -239,6 +239,10 @@ async function loadFiles() {
             const label = isReceived ? `De: ${file.sender}` : `À: ${file.recipients || 'Plusieurs'}`;
             const badgeClass = isReceived ? 'badge-received' : 'badge-sent';
             
+            // Déterminer le nom du PC propriétaire pour le téléchargement
+            const ownerName = isReceived ? peerName : (file.recipients === '*' ? peerName : file.recipients);
+            const downloadUrl = `${API_BASE}/file/download/${encodeURIComponent(peerName)}/${encodeURIComponent(file.filename)}`;
+            
             return `
                 <div class="file-item">
                     <div class="file-icon">${icon}</div>
@@ -249,7 +253,14 @@ async function loadFiles() {
                             ${file.recipient_count ? ` (${file.recipient_count} PC)` : ''}
                         </div>
                     </div>
-                    <span class="badge ${badgeClass}">${isReceived ? 'Reçu' : 'Envoyé'}</span>
+                    <div class="file-actions">
+                        <span class="badge ${badgeClass}">${isReceived ? 'Reçu' : 'Envoyé'}</span>
+                        ${isReceived ? `
+                            <button class="btn-download" onclick="downloadFile('${peerName}', '${file.filename}')" title="Télécharger">
+                                📥 Télécharger
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             `;
         }).join('');
@@ -545,4 +556,20 @@ async function logout() {
             window.location.href = '/web';
         }
     }
+}
+
+// Télécharger un fichier
+function downloadFile(peerName, filename) {
+    const downloadUrl = `${API_BASE}/file/download/${encodeURIComponent(peerName)}/${encodeURIComponent(filename)}`;
+    
+    // Créer un lien temporaire pour déclencher le téléchargement
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification(`Téléchargement de ${filename}...`, 'info');
 }

@@ -366,6 +366,34 @@ def upload_file():
     }), 200
 
 
+@app.route('/api/file/download/<peer_name>/<filename>', methods=['GET'])
+def download_file(peer_name, filename):
+    """
+    Télécharger un fichier depuis le stockage d'un PC
+    
+    Args:
+        peer_name: Nom du PC propriétaire
+        filename: Nom du fichier
+    """
+    # Sécuriser le nom de fichier
+    filename = secure_filename(filename)
+    
+    # Chemin vers le fichier
+    file_dir = os.path.join(WEB_UPLOAD_DIR, peer_name)
+    
+    # Vérifier que le fichier existe
+    if not os.path.exists(os.path.join(file_dir, filename)):
+        return jsonify({'error': 'Fichier introuvable'}), 404
+    
+    # Envoyer le fichier
+    return send_from_directory(
+        file_dir, 
+        filename, 
+        as_attachment=True,
+        download_name=filename
+    )
+
+
 # ========================================
 # ROUTES - INFORMATIONS
 # ========================================
