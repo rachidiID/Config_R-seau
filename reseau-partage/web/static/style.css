@@ -289,8 +289,20 @@ body {
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;
+}
+
+.peer-status-online {
     background: #d1fae5;
     color: #065f46;
+}
+
+.peer-status-offline {
+    background: #f3f4f6;
+    color: #9ca3af;
+}
+
+.peer-item.peer-offline {
+    opacity: 0.6;
 }
 
 /* Files List */

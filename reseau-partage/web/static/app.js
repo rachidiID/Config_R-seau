@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     startAutoRefresh();
     checkHAStatus();
+    startHeartbeat();
 });
 
 // Initialiser le peer
@@ -88,6 +89,28 @@ async function registerPeer() {
     }
 }
 
+// Envoyer un signal de vie (heartbeat)
+async function sendHeartbeat() {
+    try {
+        await fetch(`${API_BASE}/heartbeat`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: peerName })
+        });
+    } catch (error) {
+        console.error('Heartbeat erreur:', error);
+    }
+}
+
+// Démarrer heartbeat automatique (toutes les 2 minutes)
+function startHeartbeat() {
+    // Premier heartbeat immédiat
+    sendHeartbeat();
+    
+    // Puis toutes les 2 minutes (120000 ms)
+    setInterval(sendHeartbeat, 120000);
+}
+
 // Configuration des événements
 function setupEventListeners() {
     // Upload de fichier
@@ -158,19 +181,20 @@ function handleFileSelect(event) {
 // Charger la liste des peers
 async function loadPeers() {
     try {
-        const response = await fetch(`${API_BASE}/peers/online`);
+        const response = await fetch(`${API_BASE}/peers`);
         const data = await response.json();
         
         const peersList = document.getElementById('peersList');
         const recipientSelect = document.getElementById('recipientSelect');
         
         // Filtrer le peer actuel
-        const peers = data.peers.filter(p => p.name !== peerName);
+        const allPeers = data.peers.filter(p => p.name !== peerName);
+        const onlinePeers = allPeers.filter(p => p.status === 'online');
         
-        if (peers.length === 0) {
+        if (allPeers.length === 0) {
             peersList.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">👥</div>
+                    <div class="empty-state-icon">PC Isolé</div>
                     <p>Aucun PC connecté</p>
                 </div>
             `;
@@ -178,25 +202,36 @@ async function loadPeers() {
             return;
         }
         
-        // Mettre à jour la liste
-        peersList.innerHTML = peers.map(peer => `
-            <div class="peer-item">
-                <div class="peer-details">
-                    <div class="peer-name">${peer.name}</div>
-                    <div class="peer-ip">${peer.ip_address}:${peer.port}</div>
+        // Mettre à jour la liste avec statut visuel
+        peersList.innerHTML = allPeers.map(peer => {
+            const isOnline = peer.status === 'online';
+            const statusClass = isOnline ? 'peer-status-online' : 'peer-status-offline';
+            const statusText = isOnline ? 'En ligne' : 'Hors ligne';
+            const statusDot = isOnline ? '•' : '●';
+            
+            return `
+                <div class="peer-item ${isOnline ? '' : 'peer-offline'}">
+                    <div class="peer-details">
+                        <div class="peer-name">${peer.name}</div>
+                        <div class="peer-ip">${peer.ip_address}:${peer.port}</div>
+                    </div>
+                    <span class="peer-status ${statusClass}">${statusDot} ${statusText}</span>
                 </div>
-                <span class="peer-status">En ligne</span>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
-        // Mettre à jour le select
-        recipientSelect.innerHTML = `
-            <option value="*">Tous les PC (${peers.length})</option>
-            ${peers.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
-        `;
+        // Mettre à jour le select (seulement peers online)
+        if (onlinePeers.length === 0) {
+            recipientSelect.innerHTML = '<option value="">Aucun PC en ligne</option>';
+        } else {
+            recipientSelect.innerHTML = `
+                <option value="*">Tous les PC (${onlinePeers.length})</option>
+                ${onlinePeers.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+            `;
+        }
         
         // Mettre à jour le badge
-        document.getElementById('peersCount').textContent = peers.length;
+        document.getElementById('peersCount').textContent = onlinePeers.length;
         
     } catch (error) {
         console.error('Erreur:', error);
@@ -224,7 +259,7 @@ async function loadFiles() {
         if (allFiles.length === 0) {
             filesList.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">📂</div>
+                    <div class="empty-state-icon">[Fichiers]</div>
                     <p>Aucun fichier</p>
                 </div>
             `;
@@ -235,7 +270,7 @@ async function loadFiles() {
         // Afficher les fichiers (FILTRÉ: seuls les fichiers reçus pour cet utilisateur)
         filesList.innerHTML = allFiles.map(file => {
             const isReceived = file.type === 'received';
-            const icon = isReceived ? '📥' : '📤';
+            const icon = isReceived ? '[REÇU]' : '[ENVOYÉ]';
             const label = isReceived ? `De: ${file.sender}` : `À: ${file.recipients || 'Plusieurs'}`;
             const badgeClass = isReceived ? 'badge-received' : 'badge-sent';
             
@@ -253,7 +288,7 @@ async function loadFiles() {
                         <span class="badge ${badgeClass}">${isReceived ? 'Reçu' : 'Envoyé'}</span>
                         ${isReceived ? `
                             <button class="btn-download" onclick="downloadFile('${peerName}', '${file.filename}')" title="Télécharger">
-                                📥 Télécharger
+                                Télécharger
                             </button>
                         ` : ''}
                     </div>

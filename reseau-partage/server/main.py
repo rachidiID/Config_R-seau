@@ -6,6 +6,7 @@ Projet: Réseau de partage de fichiers
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from apscheduler.schedulers.background import BackgroundScheduler
 import sys
 import os
 import shutil
@@ -579,6 +580,42 @@ def auth_logout():
             save_auth_data(auth_data)
     
     return jsonify({'status': 'disconnected'}), 200
+
+
+@app.route('/api/heartbeat', methods=['POST'])
+def heartbeat():
+    """Signal de vie d'un peer pour maintenir son statut online"""
+    data = request.json
+    name = data.get('name')
+    
+    if not name:
+        return jsonify({'error': 'name requis'}), 400
+    
+    # Mettre à jour last_seen
+    db.update_peer_last_seen(name)
+    
+    return jsonify({'status': 'ok'}), 200
+
+
+# ========================================
+# TÂCHES DE FOND
+# ========================================
+
+def scheduled_cleanup():
+    """Tâche planifiée : nettoyer peers inactifs et mettre à jour statuts"""
+    # Mettre à jour les statuts (offline si >5 min)
+    updated = db.update_peers_status()
+    if updated > 0:
+        print(f"Statuts mis à jour : {updated} peer(s) marqué(s) offline")
+    
+    # Supprimer les peers inactifs >10h
+    deleted = db.cleanup_inactive_peers()
+
+
+# Initialiser le scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=scheduled_cleanup, trigger="interval", minutes=5)
+scheduler.start()
 
 
 # ========================================

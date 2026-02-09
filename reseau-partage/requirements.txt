@@ -1,6 +1,7 @@
 # Serveur
 Flask==3.0.0
 Flask-CORS==4.0.0
+APScheduler==3.10.4
 
 # Client
 requests==2.31.0

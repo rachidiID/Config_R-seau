@@ -401,3 +401,74 @@ class Database:
         conn.close()
         
         return files
+    
+    def update_peer_last_seen(self, name: str):
+        """
+        Mettre à jour last_seen d'un peer (heartbeat)
+        
+        Args:
+            name: Nom du PC
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        now = datetime.utcnow().isoformat()
+        
+        cursor.execute("""
+            UPDATE peers
+            SET last_seen = ?, status = 'online'
+            WHERE name = ?
+        """, (now, name))
+        
+        conn.commit()
+        conn.close()
+    
+    def update_peers_status(self):
+        """
+        Mettre à jour le statut des peers (offline si inactif >5 min)
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Marquer offline les peers inactifs depuis plus de 5 minutes
+        cursor.execute("""
+            UPDATE peers
+            SET status = 'offline'
+            WHERE status = 'online'
+            AND datetime(last_seen) < datetime('now', '-5 minutes')
+        """)
+        
+        updated = cursor.rowcount
+        conn.commit()
+        conn.close()
+        
+        return updated
+    
+    def cleanup_inactive_peers(self):
+        """
+        Supprimer les peers inactifs depuis plus de 10 heures
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Obtenir les noms des peers à supprimer
+        cursor.execute("""
+            SELECT name FROM peers
+            WHERE datetime(last_seen) < datetime('now', '-10 hours')
+        """)
+        
+        peers_to_delete = [row['name'] for row in cursor.fetchall()]
+        
+        # Supprimer les peers
+        cursor.execute("""
+            DELETE FROM peers
+            WHERE datetime(last_seen) < datetime('now', '-10 hours')
+        """)
+        
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+        
+        if deleted > 0:
+            print(f"✓ Nettoyage : {deleted} peer(s) inactif(s) supprimé(s): {', '.join(peers_to_delete)}")
+        
+        return deleted
