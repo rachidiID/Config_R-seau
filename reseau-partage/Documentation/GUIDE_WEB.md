@@ -1,272 +1,417 @@
-# Guide Complet - Interface Web P2P
+# 🌐 Guide d'Utilisation - Interface Web
 
-## Vue d'ensemble
+## 🎯 Vue d'Ensemble
 
-L'interface web offre une alternative graphique moderne au CLI pour gérer vos transferts de fichiers P2P.
+L'interface web permet de **partager des fichiers** entre plusieurs ordinateurs **sans ligne de commande**.
 
-## Démarrage rapide
+## 📋 Workflow Complet
 
-### 1. Démarrer le serveur
+### Étape 1 : Démarrer le Serveur Central
+
+**Sur UN ordinateur** (ou sur PythonAnywhere), démarrez le serveur :
 
 ```bash
-cd ~/Base_de_données/reseau-partage
-source venv/bin/activate
+# En local
 python server/main.py
 ```
 
-Le serveur démarre sur http://localhost:5000
+**Sur PythonAnywhere** : Déjà fait ! Le serveur tourne à `https://rachidi.pythonanywhere.com`
 
-### 2. Accéder à l'interface web
+---
 
-Ouvrez votre navigateur et allez à:
+### Étape 2 : Connecter les Clients (PC)
+
+Chaque PC qui veut partager des fichiers doit :
+
+#### Option A : Via Navigateur (Simple)
+
+1. Ouvrir le navigateur
+2. Aller sur l'URL :
+   ```
+   https://rachidi.pythonanywhere.com/web?name=PC1&port=5001
+   ```
+   
+   **Paramètres URL :**
+   - `name=PC1` → Remplacer par le nom de votre PC (PC1, PC2, Rachidi, etc.)
+   - `port=5001` → Port unique pour chaque PC (5001, 5002, 5003, etc.)
+
+3. La page se charge et vous êtes **automatiquement connecté** !
+
+**Exemples d'URLs pour différents PC :**
+
+| PC | URL |
+|----|-----|
+| PC1 | `https://rachidi.pythonanywhere.com/web?name=PC1&port=5001` |
+| PC2 | `https://rachidi.pythonanywhere.com/web?name=PC2&port=5002` |
+| Rachidi | `https://rachidi.pythonanywhere.com/web?name=Rachidi&port=5003` |
+| PC-Bureau | `https://rachidi.pythonanywhere.com/web?name=PC-Bureau&port=5004` |
+
+#### Option B : Laisser Entrer Manuellement
+
+Ouvrir simplement :
 ```
-http://localhost:5000/web?name=PC1&port=5001
+https://rachidi.pythonanywhere.com/web
 ```
 
-**Paramètres URL:**
-- `name` : Nom de votre PC (ex: PC1, PC2, PC3)
-- `port` : Port pour recevoir les fichiers (5001, 5002, 5003...)
+Une popup demande :
+- Nom du PC : `PC1` (par exemple)
+- Port : `5001` (par exemple)
 
-## Utilisation multi-PC
+---
 
-### Configuration PC1
-```
-http://localhost:5000/web?name=PC1&port=5001
-```
+### Étape 3 : Vérifier la Connexion
 
-### Configuration PC2  
-```
-http://localhost:5000/web?name=PC2&port=5002
-```
+Sur l'interface web, vous devez voir :
 
-### Configuration PC3
+✅ **En haut à gauche** :
 ```
-http://localhost:5000/web?name=PC3&port=5003
+🌐 Réseau de Partage P2P v2.0
+● Connecté
+Nom: PC1
+Port: 5001
 ```
 
-## Fonctionnalités
+✅ **Section "PCs connectés"** :
+- Vous devez voir les **autres PC** connectés
+- Exemple : "PC2", "Rachidi", etc.
 
-### 📤 Envoyer des fichiers
+Si vous ne voyez personne → Les autres PC ne sont pas encore connectés.
 
-1. **Sélectionner un fichier:**
-   - Cliquez sur la zone de dépôt
-   - OU glissez-déposez un fichier
+---
 
-2. **Choisir le destinataire:**
-   - Un PC spécifique
-   - Tous les PC (option *)
+### Étape 4 : Envoyer un Fichier
 
-3. **Envoyer:**
-   - Cliquez sur "Envoyer le fichier"
-   - Suivez la progression en temps réel
+#### 📤 Méthode 1 : Drag & Drop (Glisser-Déposer)
 
-### 👥 PC Connectés
+1. **Glissez un fichier** depuis votre explorateur
+2. **Déposez-le** dans la zone "Envoyer un fichier"
+3. Le fichier apparaît avec sa taille
+4. **Sélectionnez le destinataire** :
+   - Un PC spécifique (ex: PC2)
+   - **"Tous les PC"** pour envoyer à tout le monde
+5. Cliquez **"Envoyer le fichier"**
+6. ✅ Notification de succès !
 
-- **Liste en temps réel** de tous les PC en ligne
-- **Rafraîchissement automatique** toutes les 5 secondes
-- **Informations affichées:**
-  - Nom du PC
-  - Adresse IP
-  - Port
-  - Statut (En ligne)
+#### 📤 Méthode 2 : Cliquer pour Sélectionner
 
-### 📥 Fichiers Reçus
+1. **Cliquez** sur la zone "📁 Cliquez ou glissez un fichier ici"
+2. Une fenêtre s'ouvre → **Choisissez votre fichier**
+3. Le fichier apparaît
+4. **Sélectionnez le destinataire**
+5. Cliquez **"Envoyer le fichier"**
 
-- Liste de tous les fichiers/dossiers reçus
-- Type (Fichier/Dossier)
-- Taille formatée
+---
 
-## Design & Interface
+### Étape 5 : Recevoir un Fichier
 
-### Thème Moderne
-- **Couleurs:** Dégradé violet/bleu professionnel
-- **Typographie:** Inter (Google Fonts)
-- **Style:** Cards avec ombres douces, coins arrondis
+**Automatique !**
 
-### Responsive
-- ✅ Desktop (1200px+)
-- ✅ Tablette (768px-1200px)
-- ✅ Mobile (< 768px)
+Quand quelqu'un vous envoie un fichier :
 
-### Interactions
-- **Glisser-déposer** pour upload
-- **Notifications** pour chaque action
-- **Barre de progression** animée
-- **Auto-refresh** intelligent
+1. ✅ Notification apparaît : **"Fichier envoyé avec succès"**
+2. Le fichier apparaît dans la section **"Fichiers reçus et envoyés"**
+3. Badge bleu **"Reçu"** avec icône 📥
+4. Indique **"De: NomDuPC"**
 
-## Notifications
+Le fichier est stocké dans :
+```
+storage/VotreNomPC/nom_du_fichier.ext
+```
 
-Le système affiche automatiquement des notifications pour:
-- ✅ Connexion réussie au serveur
-- ✅ Fichier envoyé avec succès
-- ❌ Erreurs de transfert
-- ℹ️ Messages informatifs
+---
 
-Les notifications disparaissent après 3 secondes.
+## 📱 Interface Web - Guide Visuel
 
-## Comparaison CLI vs Web
+### Zone 1 : Informations de Connexion (Haut)
 
-| Fonctionnalité | CLI | Web |
-|----------------|-----|-----|
-| Envoi fichiers | ✅ | ✅ |
-| Envoi dossiers | ✅ | 🔄 En cours |
-| Liste PC | ✅ | ✅ |
-| Fichiers reçus | ✅ | ✅ |
-| Progression | Texte | Barre visuelle |
-| Interface | Terminal | Navigateur |
-| Auto-refresh | ❌ | ✅ |
-| Glisser-déposer | ❌ | ✅ |
-| Notifications | ❌ | ✅ |
+```
+🌐 Réseau de Partage P2P v2.0
+┌────────────────────────────────┐
+│ ● Connecté | Nom: PC1 | Port: 5001 | Serveur: Détection... │
+└────────────────────────────────┘
+```
 
-## Utilisation simultanée
+### Zone 2 : PCs Connectés (Gauche)
 
-Vous pouvez utiliser **CLI et Web en même temps** !
+```
+┌─ PCs connectés (2) ────────┐
+│                            │
+│  PC2                       │
+│  192.168.1.10:5002         │
+│  [En ligne]                │
+│                            │
+│  Rachidi                   │
+│  192.168.1.15:5003         │
+│  [En ligne]                │
+│                            │
+└────────────────────────────┘
+```
 
-**Terminal 1:** Serveur
+### Zone 3 : Envoyer un Fichier (Centre)
+
+```
+┌─ Envoyer un fichier ───────┐
+│                            │
+│      📁                    │
+│  Cliquez ou glissez        │
+│  un fichier ici            │
+│                            │
+│  Fichiers >1GB seront      │
+│  automatiquement fragmentés│
+│                            │
+│  Destinataire:             │
+│  [▼ Tous les PC (2)]       │
+│                            │
+│  [Envoyer le fichier]      │
+│                            │
+└────────────────────────────┘
+```
+
+### Zone 4 : Fichiers Reçus/Envoyés (Droite)
+
+```
+┌─ Fichiers reçus et envoyés (3) ─┐
+│                                 │
+│  📥 rapport.pdf                 │
+│  2.5 MB • De: PC2               │
+│  [Reçu]                         │
+│                                 │
+│  📤 presentation.pptx           │
+│  8.3 MB • À: Rachidi            │
+│  [Envoyé]                       │
+│                                 │
+│  📤 projet.zip                  │
+│  125 MB • À: Plusieurs (2 PC)   │
+│  [Envoyé]                       │
+│                                 │
+└─────────────────────────────────┘
+```
+
+---
+
+## 🔄 Rafraîchissement Automatique
+
+L'interface se met à jour **automatiquement toutes les 5 secondes** :
+
+- Liste des PC connectés
+- Nouveaux fichiers reçus
+- État du réseau HA (si activé)
+
+**Pas besoin de recharger la page !**
+
+---
+
+## ⚠️ Fragmentation Automatique
+
+Pour les fichiers **> 1 GB** :
+
+1. Vous voyez un message jaune :
+   ```
+   ⚠️ Fragmentation activée
+   Fichier trop volumineux (1.5 GB)
+   Sera découpé en 6 morceaux de 256 MB
+   Distribution sur 2 PC avec redondance 2x
+   ```
+
+2. Le transfert se fait automatiquement
+3. Le destinataire reçoit le fichier **reconstruit**
+
+---
+
+## 🚨 Notifications
+
+### ✅ Notifications de Succès (Vertes)
+
+- **"Connecté au serveur"** → Vous êtes en ligne
+- **"Fichier envoyé avec succès"** → Transfert réussi
+- **"Fichier téléchargé"** → Réception réussie
+
+### ❌ Notifications d'Erreur (Rouges)
+
+- **"Erreur de connexion au serveur"** → Serveur inaccessible
+- **"Veuillez sélectionner un fichier et un destinataire"** → Oubli de sélection
+- **"Erreur lors de l'envoi"** → Problème de transfert
+
+### 💡 Correction du Bug des Notifications
+
+✅ **Les anciennes notifications disparaissent automatiquement** après 3 secondes
+✅ **Une seule notification visible à la fois** (les anciennes s'effacent)
+
+---
+
+## 🎮 Scénarios d'Usage
+
+### Scénario 1 : Partage entre 2 PC (Simple)
+
+**PC1** :
+```
+1. Ouvrir : https://rachidi.pythonanywhere.com/web?name=PC1&port=5001
+2. Glisser fichier "rapport.pdf"
+3. Sélectionner destinataire : PC2
+4. Cliquer "Envoyer"
+```
+
+**PC2** :
+```
+1. Ouvrir : https://rachidi.pythonanywhere.com/web?name=PC2&port=5002
+2. Attendre quelques secondes
+3. Voir "rapport.pdf" apparaître dans "Fichiers reçus"
+4. Fichier stocké dans storage/PC2/rapport.pdf
+```
+
+---
+
+### Scénario 2 : Partage Multiple (À tous)
+
+**PC1** :
+```
+1. Ouvrir l'interface web
+2. Sélectionner fichier "presentation.pptx"
+3. Destinataire : "Tous les PC (3)"
+4. Envoyer
+```
+
+**Résultat** : PC2, PC3, et Rachidi reçoivent TOUS le fichier.
+
+---
+
+### Scénario 3 : Gros Fichier (Fragmentation)
+
+**Rachidi** :
+```
+1. Ouvrir l'interface
+2. Sélectionner fichier "video.mp4" (1.5 GB)
+3. Message jaune apparaît : "⚠️ Fragmentation activée"
+4. Envoyer à PC1
+```
+
+**En coulisse** :
+- Fichier découpé en 6 morceaux de 256 MB
+- Distribution automatique sur les PC disponibles
+- PC1 reçoit le fichier reconstruit
+
+---
+
+## 🔧 Résolution de Problèmes
+
+### Problème 1 : "Aucun PC connecté"
+
+**Causes** :
+- Les autres PC n'ont pas ouvert l'interface web
+- Mauvaise connexion réseau
+
+**Solutions** :
+1. Vérifier que les autres PC ont ouvert l'URL
+2. Attendre 5-10 secondes (rafraîchissement auto)
+3. Vérifier que le serveur tourne
+
+---
+
+### Problème 2 : "Erreur de connexion au serveur"
+
+**Causes** :
+- Serveur PythonAnywhere arrêté
+- URL incorrecte
+
+**Solutions** :
+1. Vérifier l'URL : `https://rachidi.pythonanywhere.com/web`
+2. Vérifier que le serveur est "Running" sur PythonAnywhere
+3. Cliquer "Reload" sur PythonAnywhere
+
+---
+
+### Problème 3 : Fichier non reçu
+
+**Causes** :
+- Destinataire déconnecté pendant le transfert
+- Fichier trop volumineux (limite 100MB sur plan gratuit)
+
+**Solutions** :
+1. Vérifier que le destinataire est "En ligne"
+2. Pour gros fichiers, upgrader PythonAnywhere ou utiliser VPS
+
+---
+
+### Problème 4 : Notifications restent affichées
+
+✅ **CORRIGÉ !** 
+
+Les notifications disparaissent maintenant automatiquement après 3 secondes.
+
+Si ça persiste :
 ```bash
-python server/main.py
+# Mettre à jour le code sur PythonAnywhere
+cd ~/Config_R-seau/reseau-partage
+git pull origin main
+# Puis cliquer "Reload" sur PythonAnywhere
 ```
 
-**Terminal 2:** Client CLI PC1
-```bash
-python client/main.py --name PC1 --port 5001
-```
+---
 
-**Navigateur:** Interface Web PC2
-```
-http://localhost:5000/web?name=PC2&port=5002
-```
+## 📊 Limites PythonAnywhere (Plan Gratuit)
 
-Les deux clients (CLI et Web) peuvent échanger des fichiers !
+### ✅ Ce qui fonctionne
 
-## Architecture technique
+- ✅ Interface web
+- ✅ Partage de fichiers <100MB total
+- ✅ Plusieurs PC connectés
+- ✅ Base de données SQLite
+- ✅ Notifications
+- ✅ Auto-refresh
 
-### Frontend (JavaScript)
-- **Vanilla JS** - Pas de framework, léger et rapide
-- **Fetch API** - Requêtes HTTP vers le serveur
-- **Crypto API** - Calcul des checksums (SHA-256)
-- **File API** - Gestion des uploads
+### ⚠️ Limitations
 
-### Backend (Flask)
-- **Routes API** - Endpoints REST existants
-- **Templates** - Rendu HTML avec Jinja2
-- **CORS** - Support cross-origin
-- **Static files** - CSS/JS servis par Flask
+- ⚠️ Espace disque : 100MB total
+- ⚠️ Upload max : ~10-20MB par fichier
+- ⚠️ Pas de connexions P2P directes (tout passe par le serveur)
+- ⚠️ HA (Haute Disponibilité) non fonctionnel sur plan gratuit
+- ⚠️ CPU limité (peut être lent avec plusieurs utilisateurs)
 
-### Communication
-```
-Interface Web (JS)
-    ↓ HTTP/JSON
-Serveur Flask (Python)
-    ↓ REST API
-Base de données SQLite
-```
+### 💡 Pour Lever ces Limites
 
-## Sécurité
+**Option 1 : PythonAnywhere Payant** (5$/mois)
+- 1GB d'espace
+- Fichiers jusqu'à 100MB
+- Plus de CPU
 
-### Implémenté
-- ✅ Validation des fichiers côté client
-- ✅ Checksum SHA-256 pour intégrité
-- ✅ CORS configuré
-- ✅ Enregistrement des transferts
+**Option 2 : VPS DigitalOcean** (5$/mois)
+- Espace illimité
+- Fichiers illimités
+- HA complet fonctionnel
+- Connexions P2P directes
 
-### À venir (Phase 3)
-- 🔄 Chiffrement AES-256
-- 🔄 Authentification par mot de passe
-- 🔄 SSL/HTTPS
-- 🔄 Signatures numériques
+Voir [DEPLOIEMENT.md](DEPLOIEMENT.md) pour migrer.
 
-## Personnalisation
+---
 
-### Changer les couleurs
+## 🎯 Résumé Rapide
 
-Éditez `web/static/style.css`:
+### Pour Partager un Fichier :
 
-```css
-:root {
-    --primary: #2563eb;      /* Bleu principal */
-    --success: #10b981;      /* Vert succès */
-    --danger: #ef4444;       /* Rouge erreur */
-    /* ... */
-}
-```
+1. **Ouvrir** : `https://rachidi.pythonanywhere.com/web?name=VOTRE_NOM&port=5001`
+2. **Glisser** votre fichier
+3. **Choisir** le destinataire
+4. **Cliquer** "Envoyer"
+5. ✅ Fait !
 
-### Changer le rafraîchissement
+### Pour Recevoir un Fichier :
 
-Éditez `web/static/app.js`:
+1. **Ouvrir** l'interface web
+2. **Attendre** (rafraîchissement auto toutes les 5s)
+3. Le fichier apparaît dans "Fichiers reçus"
+4. ✅ Disponible dans `storage/VotreNom/`
 
-```javascript
-// Ligne ~320
-refreshInterval = setInterval(() => {
-    loadPeers();
-    loadFiles();
-}, 5000); // 5000ms = 5 secondes
-```
+---
 
-## Dépannage
+## 📞 Aide
 
-### Le serveur ne démarre pas
-```bash
-# Vérifier que le venv est activé
-source venv/bin/activate
+Si vous avez des questions :
+1. Consultez les logs sur PythonAnywhere (Error log)
+2. Vérifiez que tous les PC ont des ports différents
+3. Assurez-vous que le serveur est "Running"
 
-# Vérifier les dépendances
-pip install -r requirements.txt
-```
+**Astuce** : Mettez l'URL en favori pour y accéder rapidement !
 
-### L'interface ne charge pas
-1. Vérifiez l'URL: http://localhost:5000/web
-2. Vérifiez que le serveur est démarré
-3. Vérifiez la console navigateur (F12)
+---
 
-### Les PC n'apparaissent pas
-1. Vérifiez que le serveur est accessible
-2. Ouvrez la console (F12) pour voir les erreurs
-3. Vérifiez que le nom et port sont corrects dans l'URL
-
-### L'envoi échoue
-1. Vérifiez que le destinataire est en ligne
-2. Vérifiez la taille du fichier (< 1GB)
-3. Regardez la console pour les erreurs
-
-## Raccourcis clavier
-
-- **Ctrl+R** : Rafraîchir la page
-- **F5** : Recharger complètement
-- **F12** : Ouvrir les outils développeur
-- **Ctrl+Shift+I** : Inspecter un élément
-
-## Compatibilité navigateurs
-
-| Navigateur | Version | Support |
-|------------|---------|---------|
-| Chrome | 90+ | ✅ Complet |
-| Firefox | 88+ | ✅ Complet |
-| Safari | 14+ | ✅ Complet |
-| Edge | 90+ | ✅ Complet |
-| Opera | 76+ | ✅ Complet |
-
-## Performance
-
-- **Taille page:** ~15 KB (HTML + CSS + JS)
-- **Chargement:** < 100ms
-- **Rafraîchissement:** Toutes les 5s
-- **Mémoire:** ~5-10 MB par onglet
-
-## Prochaines améliorations
-
-- [ ] Upload de dossiers (drag & drop)
-- [ ] WebSockets pour temps réel
-- [ ] Historique des transferts
-- [ ] Recherche de fichiers
-- [ ] Aperçu des fichiers
-- [ ] Mode sombre
-- [ ] Multi-langues
-- [ ] PWA (app installable)
-
-## Support
-
-Pour toute question ou problème, consultez:
-- `README.md` - Documentation générale
-- `GUIDE_DEBUTANT.md` - Guide débutant complet
-- `SCENARIOS.md` - Exemples d'utilisation
+**Bon partage !** 🚀

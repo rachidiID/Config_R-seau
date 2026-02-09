@@ -9,6 +9,9 @@ from werkzeug.utils import secure_filename
 import sys
 import os
 import shutil
+import secrets
+import hashlib
+import json
 
 # Ajouter le dossier parent au path pour importer shared
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -33,6 +36,49 @@ os.makedirs(WEB_UPLOAD_DIR, exist_ok=True)
 
 # Initialiser la base de données
 db = Database(DATABASE_PATH)
+
+# Fichier pour stocker les informations d'authentification
+AUTH_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'network_auth.json')
+PORTS_IN_USE = set()
+
+# ========================================
+# FONCTIONS D'AUTHENTIFICATION
+# ========================================
+
+def load_auth_data():
+    """Charger les données d'authentification"""
+    if os.path.exists(AUTH_FILE):
+        with open(AUTH_FILE, 'r') as f:
+            return json.load(f)
+    return {'network_password_hash': None, 'users': {}, 'next_port': 5001}
+
+def save_auth_data(data):
+    """Sauvegarder les données d'authentification"""
+    with open(AUTH_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+def hash_password(password):
+    """Hasher un mot de passe"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def generate_token():
+    """Générer un token de session"""
+    return secrets.token_urlsafe(32)
+
+def get_available_port():
+    """Trouver un port disponible"""
+    auth_data = load_auth_data()
+    port = auth_data.get('next_port', 5001)
+    
+    # Trouver le prochain port libre
+    while port in PORTS_IN_USE:
+        port += 1
+    
+    PORTS_IN_USE.add(port)
+    auth_data['next_port'] = port + 1
+    save_auth_data(auth_data)
+    
+    return port
 
 
 # ========================================
@@ -382,14 +428,110 @@ def index():
 
 @app.route('/web')
 def web_interface():
-    """Interface web"""
-    return render_template('index.html')
+    """Interface web - Rediriger vers la page de connexion si pas de session"""
+    # Vérifier si des paramètres sont passés (connexion établie)
+    name = request.args.get('name')
+    port = request.args.get('port')
+    token = request.args.get('token')
+    
+    if name and port and token:
+        # Vérifier le token
+        auth_data = load_auth_data()
+        user = auth_data['users'].get(name)
+        
+        if user and user.get('token') == token:
+            return render_template('index.html')
+    
+    # Sinon, rediriger vers la page de connexion
+    return render_template('login.html')
 
 
 @app.route('/static/<path:filename>')
 def static_files(filename):
     """Servir les fichiers statiques"""
     return send_from_directory(app.static_folder, filename)
+
+
+# ========================================
+# ROUTES - AUTHENTIFICATION
+# ========================================
+
+@app.route('/api/auth/login', methods=['POST'])
+def auth_login():
+    """Connexion sécurisée"""
+    data = request.json
+    name = data.get('name')
+    password = data.get('password')
+    port = data.get('port')
+    
+    if not name or not password:
+        return jsonify({'error': 'Nom et mot de passe requis'}), 400
+    
+    auth_data = load_auth_data()
+    password_hash = hash_password(password)
+    
+    # Premier utilisateur : créer le réseau
+    if not auth_data['network_password_hash']:
+        auth_data['network_password_hash'] = password_hash
+        token = generate_token()
+        auth_data['users'][name] = {
+            'token': token,
+            'port': port,
+            'created_at': get_timestamp()
+        }
+        save_auth_data(auth_data)
+        
+        return jsonify({
+            'status': 'network_created',
+            'token': token,
+            'message': 'Réseau créé avec succès'
+        }), 200
+    
+    # Vérifier le mot de passe
+    if password_hash != auth_data['network_password_hash']:
+        return jsonify({'error': 'Mot de passe incorrect'}), 401
+    
+    # Connexion réussie
+    token = generate_token()
+    auth_data['users'][name] = {
+        'token': token,
+        'port': port,
+        'created_at': get_timestamp()
+    }
+    save_auth_data(auth_data)
+    
+    return jsonify({
+        'status': 'connected',
+        'token': token,
+        'message': 'Connexion réussie'
+    }), 200
+
+
+@app.route('/api/auth/get-port', methods=['GET'])
+def auth_get_port():
+    """Obtenir un port disponible automatiquement"""
+    port = get_available_port()
+    return jsonify({'port': port}), 200
+
+
+@app.route('/api/auth/logout', methods=['POST'])
+def auth_logout():
+    """Déconnexion"""
+    data = request.json
+    name = data.get('name')
+    
+    if name:
+        auth_data = load_auth_data()
+        if name in auth_data['users']:
+            # Libérer le port
+            port = auth_data['users'][name].get('port')
+            if port:
+                PORTS_IN_USE.discard(port)
+            
+            del auth_data['users'][name]
+            save_auth_data(auth_data)
+    
+    return jsonify({'status': 'disconnected'}), 200
 
 
 # ========================================

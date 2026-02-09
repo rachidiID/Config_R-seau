@@ -20,19 +20,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialiser le peer
 function initializePeer() {
-    // Récupérer les paramètres de l'URL ou demander
+    // Récupérer les paramètres de l'URL
     const urlParams = new URLSearchParams(window.location.search);
-    peerName = urlParams.get('name') || prompt('Nom de ce PC:', 'PC1');
-    peerPort = parseInt(urlParams.get('port') || prompt('Port:', '5001'));
+    peerName = urlParams.get('name');
+    peerPort = parseInt(urlParams.get('port'));
+    const token = urlParams.get('token');
     
-    if (!peerName || !peerPort) {
-        alert('Nom et port requis');
+    // Vérifier l'authentification
+    if (!peerName || !peerPort || !token) {
+        // Pas de session valide, retour à la page de connexion
+        window.location.href = '/web';
         return;
+    }
+    
+    // Vérifier la session stockée
+    const session = localStorage.getItem('p2p_session');
+    if (session) {
+        try {
+            const data = JSON.parse(session);
+            if (data.name !== peerName || data.token !== token) {
+                // Session invalide
+                localStorage.removeItem('p2p_session');
+                window.location.href = '/web';
+                return;
+            }
+        } catch (e) {
+            localStorage.removeItem('p2p_session');
+            window.location.href = '/web';
+            return;
+        }
     }
     
     // Mettre à jour l'interface
     document.getElementById('peerName').textContent = peerName;
     document.getElementById('peerPort').textContent = peerPort;
+    
+    // Ajouter bouton déconnexion
+    addLogoutButton();
     
     // S'enregistrer sur le serveur
     registerPeer();
@@ -350,8 +374,19 @@ function updateProgress(percent) {
     document.getElementById('progressText').textContent = `${percent}% - Transfert en cours...`;
 }
 
-// Afficher une notification
+// Afficher une notification en stack (empilées, max 3 visibles)
 function showNotification(message, type = 'info') {
+    // Vérifier le nombre de notifications actuelles
+    const existingNotifications = document.querySelectorAll('.notification');
+    const MAX_NOTIFICATIONS = 3;
+    
+    // Si on dépasse le max, supprimer la plus ancienne
+    if (existingNotifications.length >= MAX_NOTIFICATIONS) {
+        const oldest = existingNotifications[0];
+        oldest.classList.remove('show');
+        setTimeout(() => oldest.remove(), 3000);
+    }
+    
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     
@@ -367,16 +402,19 @@ function showNotification(message, type = 'info') {
             <div class="notification-title">${type === 'success' ? 'Succès' : type === 'error' ? 'Erreur' : 'Info'}</div>
             <div class="notification-message">${message}</div>
         </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
     `;
     
     document.body.appendChild(notification);
     
+    // Animation d'entrée
     setTimeout(() => notification.classList.add('show'), 100);
     
+    // Auto-suppression après 5 secondes
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    }, 5000);
 }
 
 // Formater la taille
@@ -471,3 +509,40 @@ window.addEventListener('beforeunload', async () => {
         });
     }
 });
+
+// Ajouter bouton de déconnexion
+function addLogoutButton() {
+    const peerInfo = document.querySelector('.peer-info');
+    if (peerInfo) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'btn-logout';
+        logoutBtn.innerHTML = '🚪 Déconnexion';
+        logoutBtn.onclick = logout;
+        peerInfo.appendChild(logoutBtn);
+    }
+}
+
+// Déconnexion
+async function logout() {
+    if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        try {
+            await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: peerName })
+            });
+            
+            await fetch(`${API_BASE}/unregister`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: peerName })
+            });
+            
+            localStorage.removeItem('p2p_session');
+            window.location.href = '/web';
+        } catch (error) {
+            console.error('Erreur lors de la déconnexion:', error);
+            window.location.href = '/web';
+        }
+    }
+}
