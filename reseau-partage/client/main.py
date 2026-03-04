@@ -305,6 +305,74 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
+def discover_server(timeout: int = 5) -> str:
+    """
+    Découvrir automatiquement le serveur primaire via broadcast
+    
+    Args:
+        timeout: Temps d'attente en secondes
+    
+    Returns:
+        URL du serveur primaire ou None
+    """
+    import socket
+    import json
+    import time
+    
+    DISCOVERY_PORT = 5555
+    
+    try:
+        # Créer un socket UDP pour écouter les broadcasts
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('', DISCOVERY_PORT))
+        sock.settimeout(1.0)
+        
+        print(f"[*] Recherche de serveurs disponibles (timeout: {timeout}s)...")
+        
+        servers = {}
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                data, addr = sock.recvfrom(1024)
+                message = json.loads(data.decode('utf-8'))
+                
+                if message.get('type') == 'heartbeat':
+                    server_name = message.get('name')
+                    server_host = message.get('host')
+                    server_port = message.get('port')
+                    priority = message.get('priority', 0)
+                    
+                    if server_name and server_host and server_port:
+                        servers[server_name] = {
+                            'url': f"http://{server_host}:{server_port}",
+                            'priority': priority,
+                            'name': server_name
+                        }
+                        print(f"    → Serveur trouvé: {server_name} ({server_host}:{server_port}, priorité: {priority})")
+                
+            except socket.timeout:
+                continue
+            except Exception as e:
+                print(f"[!] Erreur lors de la découverte: {e}")
+        
+        sock.close()
+        
+        if servers:
+            # Sélectionner le serveur avec la plus haute priorité
+            primary = max(servers.values(), key=lambda s: s['priority'])
+            print(f"\n[OK] Serveur primaire sélectionné: {primary['name']} → {primary['url']}\n")
+            return primary['url']
+        else:
+            print("[!] Aucun serveur trouvé via auto-découverte")
+            return None
+            
+    except Exception as e:
+        print(f"[!] Erreur de découverte: {e}")
+        return None
+
+
 def main():
     """Point d'entrée"""
     # Parser les arguments
@@ -312,8 +380,18 @@ def main():
     parser.add_argument('--name', required=True, help='Nom de ce PC (ex: PC1)')
     parser.add_argument('--server', default='http://localhost:5000', help='URL du serveur')
     parser.add_argument('--port', type=int, default=5001, help='Port de réception')
+    parser.add_argument('--auto-discover', action='store_true', help='Découvrir automatiquement le serveur primaire')
     
     args = parser.parse_args()
+    
+    # Découverte automatique si demandée
+    server_url = args.server
+    if args.auto_discover:
+        discovered = discover_server(timeout=5)
+        if discovered:
+            server_url = discovered
+        else:
+            print(f"[!] Utilisation du serveur par défaut: {server_url}\n")
     
     # Gérer Ctrl+C
     signal.signal(signal.SIGINT, signal_handler)
@@ -321,7 +399,7 @@ def main():
     # Créer et démarrer le client
     client = P2PClient(
         peer_name=args.name,
-        server_url=args.server,
+        server_url=server_url,
         port=args.port
     )
     
